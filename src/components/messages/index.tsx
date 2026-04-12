@@ -1,67 +1,95 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useChatStore } from "@/hooks/use-chat-store";
+import MarkdownContent from "../markdown/markdown";
+import ThinkingState from "../markdown/thinkingState";
 
 export default function Messages() {
-  const { activeChat } = useChatStore();
+  const { activeChat, mounted } = useChatStore();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    container.scrollTop = container.scrollHeight;
+  }, [activeChat?.messages]);
 
   return (
-    <main className="flex-1 overflow-y-auto scrollbar-chat">
-      <div className="px-5 py-5 pb-14">
-        {activeChat?.messages.length === 0 && (
-          <div className="py-10 text-sm text-text-hint">
-            Start the conversation by sending a message.
-          </div>
+    <main ref={scrollRef} className="chat-messages-scroll">
+      <div className="chat-messages-wrap">
+        {!mounted ? null : !activeChat?.messages.length ? (
+          <EmptyState />
+        ) : (
+          activeChat.messages.map((message, index) => (
+            <MessageBlock
+              key={`${message.role}-${index}`}
+              role={message.role === "user" ? "user" : "assistant"}
+              content={message.content}
+            />
+          ))
         )}
-        {activeChat?.messages.map((m, index) => (
-          <MessageBlock
-            key={`${m.role}-${index}`}
-            m={m}
-            isLast={index === activeChat.messages.length - 1}
-          />
-        ))}
       </div>
     </main>
   );
 }
 
-function MessageBlock({
-  m,
-  isLast,
-}: {
-  m: { role: string; content: string };
-  isLast: boolean;
-}) {
-  const isUser = m.role === "user";
+function EmptyState() {
+  const prompts = [
+    "Explain async/await in JavaScript",
+    "Write a Python function to flatten a nested list",
+    "What is the difference between REST and GraphQL?",
+    "How does garbage collection work in V8?",
+  ];
+
+  const fillPrompt = (prompt: string) => {
+    window.dispatchEvent(new CustomEvent("chat:fill-prompt", { detail: prompt }));
+  };
 
   return (
-    <div
-      className={`mb-3 flex gap-3 animate-fadeUp ${
-        isUser ? "flex-row-reverse" : "flex-row"
-      }`}
-    >
-      <div className="flex w-8 items-start justify-center pt-1">
-        <div
-          className={`flex h-7 w-7 items-center justify-center rounded-full text-xs ${
-            isUser
-              ? "border border-border bg-surface3 text-text"
-              : "bg-gradient-to-br from-purple-300 via-purple-400 to-purple-600 text-white shadow-sm"
-          }`}
-        >
-          {isUser ? "U" : "A"}
-        </div>
-      </div>
-      <div className="flex-1">
-        <div
-          className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-            isUser ? "bg-user-bg text-text" : "bg-surface text-text"
-          }`}
-        >
-          <div className="whitespace-pre-wrap">
-            {m.content || (isLast && !isUser ? "..." : "")}
-          </div>
-        </div>
+    <div className="empty-chat-state">
+      <div className="empty-chat-icon">*</div>
+      <h2>What&apos;s on your mind?</h2>
+      <p>Powered by your local Ollama instance. Nothing leaves your machine.</p>
+      <div className="empty-chat-suggestions">
+        {prompts.map((prompt) => (
+          <button key={prompt} type="button" onClick={() => fillPrompt(prompt)}>
+            {prompt}
+          </button>
+        ))}
       </div>
     </div>
+  );
+}
+
+function MessageBlock({
+  role,
+  content,
+}: {
+  role: "user" | "assistant";
+  content: string;
+}) {
+  return (
+    <article className={`chat-message ${role}`}>
+      <div className={`message-avatar ${role}`}>
+        {role === "assistant" ? "*" : "U"}
+      </div>
+      <div className="message-bubble-wrap">
+        <div className="message-sender">
+          {role === "assistant" ? "Local AI" : "You"}
+        </div>
+        <div className={`message-content ${role === "assistant" ? "markdown-body" : "user-pill"}`}>
+          {role === "assistant" ? (
+            content ? (
+              <MarkdownContent content={content} />
+            ) : (
+              <ThinkingState />
+            )
+          ) : (
+            content
+          )}
+        </div>
+      </div>
+    </article>
   );
 }

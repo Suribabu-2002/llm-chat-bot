@@ -13,6 +13,10 @@ export async function POST(request: NextRequest) {
   }
 
   const encoder = new TextEncoder();
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) return error.message;
+    return "Unknown error";
+  };
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -30,9 +34,11 @@ export async function POST(request: NextRequest) {
         }
 
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-      } catch (err: any) {
+      } catch (err: unknown) {
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify("[ERROR] " + err.message)}\n\n`)
+          encoder.encode(
+            `data: ${JSON.stringify("[ERROR] " + getErrorMessage(err))}\n\n`
+          )
         );
       } finally {
         controller.close();

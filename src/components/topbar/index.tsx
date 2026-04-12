@@ -2,31 +2,31 @@
 
 import { useChatStore } from "@/hooks/use-chat-store";
 
-export default function Topbar() {
-  const { activeChat, createChat, sortedChats } = useChatStore();
+export default function Topbar({
+  sidebarCollapsed,
+  onToggleSidebar,
+}: {
+  sidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
+}) {
+  const { activeChat } = useChatStore();
 
   return (
-    <header className="sticky top-0 z-10 bg-bg/90 backdrop-blur">
-      <nav className="flex h-[42px] items-center justify-between border-b border-border px-3">
-        <div className="flex items-center gap-2 text-sm text-text">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border">
-            AI
-          </span>
-          <span>LLM Chat</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden text-xs text-text-hint sm:block">
-            {activeChat?.title ?? "New chat"}
-          </span>
-          <button
-            type="button"
-            onClick={createChat}
-            className="rounded-md border border-border px-2 py-1 text-xs text-text-hint transition-colors hover:bg-surface3 hover:text-text"
-          >
-            New chat ({sortedChats.length})
-          </button>
-        </div>
-      </nav>
+    <header className="chat-topbar">
+      <button
+        type="button"
+        onClick={onToggleSidebar}
+        className="sidebar-toggle-button"
+        aria-label={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+        title="Toggle sidebar"
+      >
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="2" y="2" width="12" height="12" rx="2" />
+          <line x1="6" y1="2" x2="6" y2="14" />
+        </svg>
+      </button>
+      <div className="chat-topbar-title">{activeChat?.title ?? "New chat"}</div>
+      <div className="chat-model-badge">qwen3.5:2b | localhost</div>
     </header>
   );
 }

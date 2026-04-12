@@ -71,8 +71,14 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case "DELETE_CHAT": {
       const chats = { ...state.chats };
       delete chats[action.id];
+      const remaining = Object.values(chats).sort((a, b) => b.updatedAt - a.updatedAt);
       persist(chats);
-      return { ...state, chats };
+      return {
+        ...state,
+        chats,
+        activeChatId:
+          state.activeChatId === action.id ? remaining[0]?.id ?? null : state.activeChatId,
+      };
     }
     case "SWITCH_CHAT": {
       return { ...state, activeChatId: action.id };
@@ -117,7 +123,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case "UPDATE_TITLE": {
       const chat = state.chats[action.chatId];
       if (!chat) return state;
-      const updated = { ...chat, title: action.title };
+      const updated = { ...chat, title: action.title, updatedAt: Date.now() };
       const chats = { ...state.chats, [action.chatId]: updated };
       persist(chats);
       return { ...state, chats };

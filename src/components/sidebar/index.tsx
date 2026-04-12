@@ -4,28 +4,40 @@ import { useChatStore } from "@/hooks/use-chat-store";
 import { useTokenEstimate } from "@/hooks/use-token-estimate";
 import type { Chat } from "@/types/chat";
 
-export default function Sidebar() {
-  const { activeChatId, createChat, deleteChat, sortedChats, switchChat } = useChatStore();
-  const { tokens, percentage } = useTokenEstimate(sortedChats.flatMap((c) => c.messages));
+export default function Sidebar({
+  collapsed,
+}: {
+  collapsed: boolean;
+}) {
+  const { activeChat, activeChatId, createChat, deleteChat, sortedChats, switchChat } =
+    useChatStore();
+  const { percentage, displayText, barColor } = useTokenEstimate(
+    activeChat?.messages ?? []
+  );
 
   return (
-    <aside className="hidden w-72 shrink-0 border-r border-border bg-surface/40 md:flex md:flex-col">
-      <div className="p-3">
-        <button
-          type="button"
-          onClick={createChat}
-          className="w-full rounded-xl border border-border bg-surface2 px-3 py-3 text-left text-sm font-medium text-text transition-colors hover:border-accent/40 hover:bg-surface3"
-        >
-          New chat
+    <aside className={`chat-sidebar ${collapsed ? "collapsed" : ""}`}>
+      <div className="chat-sidebar-top">
+        <div className="sidebar-logo-row">
+          <div className="sidebar-logo-dot" />
+          <span>Local AI</span>
+        </div>
+        <button type="button" className="new-chat-button" onClick={createChat}>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6">
+            <line x1="8" y1="3" x2="8" y2="13" />
+            <line x1="3" y1="8" x2="13" y2="8" />
+          </svg>
+          <span>New chat</span>
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-        <div className="mb-2 text-xs font-medium text-text-hint">
-          {sortedChats.length} {sortedChats.length === 1 ? "chat" : "chats"} · {tokens} tokens
-        </div>
-        <div className="space-y-1">
-          {sortedChats.map((chat) => (
+      <div className="sidebar-section-label">Recents</div>
+
+      <div className="chat-list-panel">
+        {sortedChats.length === 0 ? (
+          <div className="chat-list-empty">No chats yet</div>
+        ) : (
+          sortedChats.map((chat) => (
             <ChatItem
               key={chat.id}
               chat={chat}
@@ -33,12 +45,21 @@ export default function Sidebar() {
               onDelete={deleteChat}
               onSelect={switchChat}
             />
-          ))}
-        </div>
+          ))
+        )}
       </div>
 
-      <div className="border-t border-border px-3 py-3">
-        <TokenBar percentage={percentage} />
+      <div className="chat-sidebar-footer">
+        <div className="token-info-row">
+          <span>Context used</span>
+          <span>{displayText}</span>
+        </div>
+        <div className="token-bar-track">
+          <div
+            className="token-bar-fill"
+            style={{ width: `${percentage}%`, backgroundColor: barColor }}
+          />
+        </div>
       </div>
     </aside>
   );
@@ -56,47 +77,24 @@ function ChatItem({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div
-      className={`flex items-center gap-2 rounded-lg p-2 text-sm transition-colors ${
-        isActive
-          ? "bg-accent-dim text-text"
-          : "text-text-hint hover:bg-surface3 hover:text-text"
-      }`}
-    >
+    <div className={`chat-list-item ${isActive ? "active" : ""}`}>
       <button
         type="button"
+        className="chat-list-select"
         onClick={() => onSelect(chat.id)}
-        className="flex-1 truncate text-left"
+        title={chat.title}
       >
         {chat.title}
       </button>
       <button
         type="button"
+        className="chat-list-delete"
         onClick={() => onDelete(chat.id)}
-        className="rounded p-1 text-text-hint hover:text-warning"
-        aria-label="Delete chat"
+        aria-label={`Delete ${chat.title}`}
+        title="Delete"
       >
         x
       </button>
-    </div>
-  );
-}
-
-function TokenBar({ percentage }: { percentage: number }) {
-  if (percentage <= 1.5) return null;
-
-  const width = Math.min(percentage / 1.5, 100) + "%";
-  return (
-    <div className="flex items-center gap-2 text-xs text-text-hint">
-      <div
-        className="h-1.5 flex-1 rounded-full overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.08)", width: "100%" }}
-      >
-        <div
-          className="h-full rounded-full"
-          style={{ background: "#a78bfa", width }}
-        />
-      </div>
     </div>
   );
 }

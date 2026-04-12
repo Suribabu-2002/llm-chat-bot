@@ -10,7 +10,6 @@ export function useStreaming() {
     activeChatId,
     isStreaming,
     setStreaming,
-    appendStreaming,
     resetStreaming,
     addMessage,
     updateLastAssistant,
@@ -23,23 +22,26 @@ export function useStreaming() {
   const rawBufRef = useRef("");
   const rafRef = useRef<number | null>(null);
 
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) return error.message;
+    return "Unknown error";
+  };
+
   const sendMessage = useCallback(
     async (text: string) => {
-      if (!text.trim() || isStreaming) return;
+      const nextText = text.trim();
+      if (!nextText || isStreaming) return;
 
       const chatId = activeChatId ?? "";
       if (!chatId) return;
 
-      // Add user message
-      addMessage(chatId, { role: "user", content: text.trim() });
+      addMessage(chatId, { role: "user", content: nextText });
 
-      // Update title on first message
       if (activeChat && activeChat.messages.length === 0) {
-        const title = text.trim().slice(0, 42) + (text.trim().length > 42 ? "…" : "");
+        const title = nextText.slice(0, 42) + (nextText.length > 42 ? "..." : "");
         updateTitle(chatId, title);
       }
 
-      // Add empty assistant placeholder
       addMessage(chatId, { role: "assistant", content: "" });
 
       setStreaming(true);
@@ -62,7 +64,7 @@ export function useStreaming() {
       try {
         const messages: Message[] = [
           ...(activeChat?.messages ?? []),
-          { role: "user", content: text.trim() },
+          { role: "user", content: nextText },
         ];
 
         const res = await fetch("/api/stream", {
@@ -118,27 +120,26 @@ export function useStreaming() {
           }
         }
 
-        // Finalize
         if (rawBufRef.current.trim()) {
           updateLastAssistant(chatId, rawBufRef.current.trim());
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (rafRef.current) {
           cancelAnimationFrame(rafRef.current);
           rafRef.current = null;
         }
         setQueuePosition(null);
 
-        if (err.name === "AbortError") {
+        if (err instanceof Error && err.name === "AbortError") {
           if (rawBufRef.current.trim()) {
             updateLastAssistant(chatId, rawBufRef.current.trim());
           } else {
-            updateLastAssistant(chatId, "— stopped");
+            updateLastAssistant(chatId, "-- stopped");
           }
         } else {
           updateLastAssistant(
             chatId,
-            `Could not reach localhost:3000\n${err.message}`
+            `Could not reach localhost:3000\n${getErrorMessage(err)}`
           );
         }
       } finally {
@@ -157,7 +158,6 @@ export function useStreaming() {
       addMessage,
       updateLastAssistant,
       setStreaming,
-      appendStreaming,
       resetStreaming,
       setQueuePosition,
       updateTitle,

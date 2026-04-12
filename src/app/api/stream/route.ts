@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
 
   const encoder = new TextEncoder();
   const getErrorMessage = (error: unknown) => {
+    console.error(error)
     if (error instanceof Error) return error.message;
     return "Unknown error";
   };
@@ -27,6 +28,8 @@ export async function POST(request: NextRequest) {
           stream: true,
           think: false,
         });
+
+        console.info("response", response)
 
         for await (const chunk of response) {
           const text = chunk.message.content;

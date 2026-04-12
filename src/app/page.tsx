@@ -24,6 +24,7 @@ function ChatShell() {
     <div className="chat-app-shell">
       <Sidebar
         collapsed={sidebarCollapsed}
+        setCollapsed={setSidebarCollapsed}
       />
       <div className="chat-main-shell">
         <Topbar

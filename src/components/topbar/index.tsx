@@ -16,7 +16,7 @@ export default function Topbar({
       <button
         type="button"
         onClick={onToggleSidebar}
-        className="sidebar-toggle-button"
+        className="sidebar-toggle-button flex"
         aria-label={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
         title="Toggle sidebar"
       >

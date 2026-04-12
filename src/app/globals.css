@@ -276,7 +276,6 @@ a {
 .sidebar-toggle-button {
   width: 30px;
   height: 30px;
-  display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
@@ -520,6 +519,10 @@ a {
   color: var(--text-hint);
   font-size: 12px;
   animation: labelPulse 2s ease infinite;
+}
+
+.display-left-nav{
+  display: none;
 }
 
 @keyframes thinkingDot {
@@ -811,6 +814,11 @@ a {
     z-index: 20;
     height: 100vh;
     box-shadow: 12px 0 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .display-left-nav{
+    display: flex;
+    margin-left: auto;
   }
 
   .chat-sidebar.collapsed {
